@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { Menu, X, Heart, Shield, Users, Activity } from "lucide-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home", icon: Heart },
     { href: "/about", label: "About", icon: Shield },
-    { href: "/patients", label: "Patients", icon: Users },
-    { href: "/donors", label: "Donors", icon: Activity },
-    { href: "/dashboard", label: "Dashboard", icon: Activity },
     { href: "/contact", label: "Contact", icon: Heart },
+    ...(user ? [{ href: "/dashboard", label: "Dashboard", icon: Activity }] : [])
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -52,12 +52,20 @@ const Navigation = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-            <Button variant="medical" size="sm">
-              Register
-            </Button>
+            {user ? (
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                Sign Out
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button variant="medical" size="sm" asChild>
+                  <Link to="/auth">Register</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -91,12 +99,20 @@ const Navigation = () => {
                 </Link>
               ))}
               <div className="flex flex-col space-y-2 pt-4 border-t border-border mt-4">
-                <Button variant="outline" size="sm">
-                  Sign In
-                </Button>
-                <Button variant="medical" size="sm">
-                  Register
-                </Button>
+                {user ? (
+                  <Button variant="outline" size="sm" onClick={() => signOut()}>
+                    Sign Out
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/auth">Sign In</Link>
+                    </Button>
+                    <Button variant="medical" size="sm" asChild>
+                      <Link to="/auth">Register</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
