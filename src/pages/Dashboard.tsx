@@ -7,6 +7,7 @@ import PatientDashboard from "@/components/dashboards/PatientDashboard";
 import DonorDashboard from "@/components/dashboards/DonorDashboard";
 import DoctorDashboard from "@/components/dashboards/DoctorDashboard";
 import AdminDashboard from "@/components/dashboards/AdminDashboard";
+import WalletConnection from "@/components/WalletConnection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -147,6 +148,11 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Wallet Connection */}
+        <div className="mb-8">
+          <WalletConnection />
+        </div>
 
         {/* Role-specific Dashboard */}
         {renderDashboard()}

@@ -16,6 +16,7 @@ const Auth = () => {
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [signInData, setSignInData] = useState({
     email: '',
@@ -60,6 +61,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     if (signUpData.password !== signUpData.confirmPassword) {
       setError('Passwords do not match');
@@ -73,28 +75,31 @@ const Auth = () => {
       return;
     }
 
-    const { error } = await signUp(signUpData.email, signUpData.password, {
+    const result = await signUp(signUpData.email, signUpData.password, {
       full_name: signUpData.fullName,
       role: signUpData.role,
       phone: signUpData.phone,
       blood_type: signUpData.bloodType
     });
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error.message);
       toast({
         title: "Sign Up Failed", 
-        description: error.message,
+        description: result.error.message,
         variant: "destructive"
       });
     } else {
+      setSuccess(result.message || 'Account created successfully!');
       toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account."
+        title: "Account Created",
+        description: "Your account has been created successfully!",
       });
+      navigate('/dashboard');
     }
     setLoading(false);
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
@@ -110,6 +115,7 @@ const Auth = () => {
           </h1>
           <p className="text-muted-foreground">Secure organ transplant management</p>
         </div>
+
 
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -264,6 +270,11 @@ const Auth = () => {
                   {error && (
                     <Alert variant="destructive">
                       <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  {success && (
+                    <Alert>
+                      <AlertDescription>{success}</AlertDescription>
                     </Alert>
                   )}
                   <Button type="submit" variant="medical" className="w-full" disabled={loading}>

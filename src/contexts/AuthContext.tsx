@@ -20,7 +20,11 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userData: any) => Promise<{ 
+    error: any; 
+    message?: string; 
+    data?: any;
+  }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
@@ -77,17 +81,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: userData
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData,
+          emailRedirectTo: undefined // Disable email verification
+        }
+      });
+
+      if (error) {
+        return { error };
       }
-    });
-    return { error };
+
+      // Skip email verification - user is immediately signed in
+      return { error: null, data, message: 'Account created successfully!' };
+    } catch (error: any) {
+      return { error: error.message || 'An unexpected error occurred during sign up' };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -116,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return { error };
   };
+
 
   const value = {
     user,

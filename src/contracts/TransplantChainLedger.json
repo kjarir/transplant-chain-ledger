@@ -1,0 +1,538 @@
+{
+  "contractAddress": "0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B",
+  "contractName": "TransplantChainLedger",
+  "network": "Deployed Network",
+  "chainId": "Unknown",
+  "deploymentTime": "2024-09-28T00:00:00.000Z",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_transactionHash",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_transactionType",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_fromUser",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_toUser",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_organRequestId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_organDonationId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_status",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_metadata",
+          "type": "string"
+        }
+      ],
+      "name": "recordTransaction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_fullName",
+          "type": "string"
+        },
+        {
+          "internalType": "enum TransplantChainLedger.UserRole",
+          "name": "_role",
+          "type": "uint8"
+        },
+        {
+          "internalType": "string",
+          "name": "_phone",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_physicalAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_dateOfBirth",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_bloodType",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_medicalHistory",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_emergencyContact",
+          "type": "string"
+        }
+      ],
+      "name": "registerUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_userAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getUserTransactions",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_transactionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTransaction",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "transactionHash",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "transactionType",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "fromUser",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "toUser",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "organRequestId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "organDonationId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "status",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "metadata",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct TransplantChainLedger.Transaction",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_userAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getUser",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "fullName",
+              "type": "string"
+            },
+            {
+              "internalType": "enum TransplantChainLedger.UserRole",
+              "name": "role",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "physicalAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dateOfBirth",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "bloodType",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "medicalHistory",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "emergencyContact",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "isVerified",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "updatedAt",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct TransplantChainLedger.User",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "donationId",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrganMatched",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "donationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "donor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.OrganType",
+          "name": "organType",
+          "type": "uint8"
+        }
+      ],
+      "name": "OrganDonationCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "donationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.DonorStatus",
+          "name": "newStatus",
+          "type": "uint8"
+        }
+      ],
+      "name": "OrganDonationUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "patient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.OrganType",
+          "name": "organType",
+          "type": "uint8"
+        }
+      ],
+      "name": "OrganRequestCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.RequestStatus",
+          "name": "newStatus",
+          "type": "uint8"
+        }
+      ],
+      "name": "OrganRequestUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "donationId",
+          "type": "uint256"
+        }
+      ],
+      "name": "TransplantCompleted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "transactionId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "transactionHash",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "transactionType",
+          "type": "string"
+        }
+      ],
+      "name": "TransactionRecorded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "fullName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.UserRole",
+          "name": "role",
+          "type": "uint8"
+        }
+      ],
+      "name": "UserRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "fullName",
+          "type": "string"
+        }
+      ],
+      "name": "UserUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "verificationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "verifier",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "targetId",
+          "type": "uint256"
+        }
+      ],
+      "name": "VerificationSubmitted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "verificationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum TransplantChainLedger.VerificationStatus",
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "VerificationCompleted",
+      "type": "event"
+    }
+  ],
+  "pinataUploads": {
+    "smartContract": {
+      "hash": "QmTe2x8UDG3d3rje4iEtYRzf2xP4DjVvnJPbUrk2hoPCjr",
+      "url": "https://gateway.pinata.cloud/ipfs/QmTe2x8UDG3d3rje4iEtYRzf2xP4DjVvnJPbUrk2hoPCjr"
+    },
+    "documentation": {
+      "hash": "QmVRKZaBTqYtmAJpxW2sHvmytsFf1p4Rz7HAhrzCHDtroX",
+      "url": "https://gateway.pinata.cloud/ipfs/QmVRKZaBTqYtmAJpxW2sHvmytsFf1p4Rz7HAhrzCHDtroX"
+    },
+    "metadata": {
+      "hash": "QmNyDsZoBi5wVpzHnvECpaKv1u4vvpxo9AeykfwkyWjsQJ",
+      "url": "https://gateway.pinata.cloud/ipfs/QmNyDsZoBi5wVpzHnvECpaKv1u4vvpxo9AeykfwkyWjsQJ"
+    },
+    "projectSummary": {
+      "hash": "QmXGXpcv8YTcQXe63FTEPBTvcjwB6ps5NPgepriFLa9D96",
+      "url": "https://gateway.pinata.cloud/ipfs/QmXGXpcv8YTcQXe63FTEPBTvcjwB6ps5NPgepriFLa9D96"
+    }
+  },
+  "verification": {
+    "status": "pending",
+    "blockExplorer": "Check network-specific explorer",
+    "verifiedAt": null
+  }
+}

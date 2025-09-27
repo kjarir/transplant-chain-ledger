@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TransplantFlow from "@/components/TransplantFlow";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, Users, Heart, Shield, CheckCircle, Clock } from "lucide-react";
+import { Stethoscope, Users, Heart, Shield, CheckCircle, Clock, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -188,13 +189,13 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
     },
     {
       title: "Total Patients",
-      value: new Set(requests.map(r => r.profiles.full_name)).size,
+      value: new Set(requests.map(r => r.profiles?.full_name).filter(Boolean)).size,
       icon: Users,
       color: "text-blue-500"
     },
     {
       title: "Total Donors",
-      value: new Set(donations.map(d => d.profiles.full_name)).size,
+      value: new Set(donations.map(d => d.profiles?.full_name).filter(Boolean)).size,
       icon: Heart,
       color: "text-red-500"
     },
@@ -227,7 +228,7 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
 
       {/* Main Content */}
       <Tabs defaultValue="requests" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Patient Requests
@@ -235,6 +236,10 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
           <TabsTrigger value="donations" className="flex items-center gap-2">
             <Heart className="w-4 h-4" />
             Donor Verifications
+          </TabsTrigger>
+          <TabsTrigger value="transplant" className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Record Transplant
           </TabsTrigger>
         </TabsList>
 
@@ -265,7 +270,7 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
                       <div>
                         <CardTitle className="flex items-center gap-2">
                           <Heart className="w-5 h-5 text-red-500" />
-                          {request.profiles.full_name} - {request.organ_type.charAt(0).toUpperCase() + request.organ_type.slice(1)}
+                          {request.profiles?.full_name || 'Unknown Patient'} - {request.organ_type.charAt(0).toUpperCase() + request.organ_type.slice(1)}
                         </CardTitle>
                         <CardDescription>
                           Submitted on {new Date(request.created_at).toLocaleDateString()}
@@ -286,11 +291,11 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h4 className="font-medium mb-1">Contact</h4>
-                          <p className="text-sm text-muted-foreground">{request.profiles.phone || 'Not provided'}</p>
+                          <p className="text-sm text-muted-foreground">{request.profiles?.phone || 'Not provided'}</p>
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Blood Type</h4>
-                          <p className="text-sm text-muted-foreground">{request.profiles.blood_type || 'Not specified'}</p>
+                          <p className="text-sm text-muted-foreground">{request.profiles?.blood_type || 'Not specified'}</p>
                         </div>
                       </div>
                       
@@ -349,7 +354,7 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
                       <div>
                         <CardTitle className="flex items-center gap-2">
                           <Heart className="w-5 h-5 text-red-500" />
-                          {donation.profiles.full_name} - {donation.organ_type.charAt(0).toUpperCase() + donation.organ_type.slice(1)}
+                          {donation.profiles?.full_name || 'Unknown Donor'} - {donation.organ_type.charAt(0).toUpperCase() + donation.organ_type.slice(1)}
                         </CardTitle>
                         <CardDescription>
                           Registered on {new Date(donation.created_at).toLocaleDateString()}
@@ -373,11 +378,11 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h4 className="font-medium mb-1">Contact</h4>
-                          <p className="text-sm text-muted-foreground">{donation.profiles.phone || 'Not provided'}</p>
+                          <p className="text-sm text-muted-foreground">{donation.profiles?.phone || 'Not provided'}</p>
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Blood Type</h4>
-                          <p className="text-sm text-muted-foreground">{donation.profiles.blood_type || 'Not specified'}</p>
+                          <p className="text-sm text-muted-foreground">{donation.profiles?.blood_type || 'Not specified'}</p>
                         </div>
                       </div>
 
@@ -402,6 +407,16 @@ const DoctorDashboard = ({ profile }: { profile: Profile }) => {
               ))
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="transplant" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Record Transplant Transaction</h2>
+            <Badge variant="outline" className="bg-green-500 text-white">
+              Blockchain + IPFS
+            </Badge>
+          </div>
+          <TransplantFlow />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,0 +1,58 @@
+{
+  "contractAddress": "0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B",
+  "contractName": "TransplantChainLedger",
+  "deploymentTime": "2024-09-28T00:00:00.000Z",
+  "network": "Unknown",
+  "chainId": "Unknown",
+  "deployer": "Unknown",
+  "transactionHash": "Unknown",
+  "compilerVersion": "0.8.19",
+  "constructorArgs": [],
+  "features": [
+    "Organ donation tracking",
+    "Patient request management",
+    "Medical verification system",
+    "Automated matching algorithm",
+    "Role-based access control",
+    "IPFS document storage",
+    "Blockchain transparency"
+  ],
+  "abi": "Generated on deployment",
+  "verified": false,
+  "pinataUploaded": true,
+  "uploadResults": [
+    {
+      "type": "smart-contract",
+      "file": "TransplantChainLedger.sol",
+      "hash": "QmTe2x8UDG3d3rje4iEtYRzf2xP4DjVvnJPbUrk2hoPCjr",
+      "size": 26035,
+      "timestamp": "2025-09-27T18:58:50.394Z",
+      "url": "https://gateway.pinata.cloud/ipfs/QmTe2x8UDG3d3rje4iEtYRzf2xP4DjVvnJPbUrk2hoPCjr"
+    },
+    {
+      "type": "documentation",
+      "file": "TransplantChainLedger-Documentation.md",
+      "hash": "QmVRKZaBTqYtmAJpxW2sHvmytsFf1p4Rz7HAhrzCHDtroX",
+      "size": 15883,
+      "timestamp": "2025-09-27T18:58:51.279Z",
+      "url": "https://gateway.pinata.cloud/ipfs/QmVRKZaBTqYtmAJpxW2sHvmytsFf1p4Rz7HAhrzCHDtroX"
+    },
+    {
+      "type": "metadata",
+      "file": "contract-metadata.json",
+      "hash": "QmNyDsZoBi5wVpzHnvECpaKv1u4vvpxo9AeykfwkyWjsQJ",
+      "size": 1112,
+      "timestamp": "2025-09-27T18:58:51.870Z",
+      "url": "https://gateway.pinata.cloud/ipfs/QmNyDsZoBi5wVpzHnvECpaKv1u4vvpxo9AeykfwkyWjsQJ"
+    },
+    {
+      "type": "summary",
+      "file": "project-summary.json",
+      "hash": "QmXGXpcv8YTcQXe63FTEPBTvcjwB6ps5NPgepriFLa9D96",
+      "size": 1412,
+      "timestamp": "2025-09-27T18:58:52.472Z",
+      "url": "https://gateway.pinata.cloud/ipfs/QmXGXpcv8YTcQXe63FTEPBTvcjwB6ps5NPgepriFLa9D96"
+    }
+  ],
+  "uploadDate": "2025-09-27T18:58:52.826Z"
+}
