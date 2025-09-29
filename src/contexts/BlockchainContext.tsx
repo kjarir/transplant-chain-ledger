@@ -2,14 +2,29 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import contractABI from '@/contracts/TransplantChainLedger.json';
 
+// Debug: Log contract ABI info and ethers version
+console.log('📋 Contract ABI loaded:', {
+  hasABI: !!contractABI.abi,
+  abiLength: contractABI.abi?.length || 0,
+  contractAddress: contractABI.contractAddress,
+  contractName: contractABI.contractName
+});
+
+console.log('🔧 Ethers version info:', {
+  version: ethers.version,
+  hasWeb3Provider: !!ethers.providers?.Web3Provider,
+  hasBrowserProvider: !!ethers.BrowserProvider
+});
+
 interface BlockchainContextType {
   contract: ethers.Contract | null;
-  provider: ethers.BrowserProvider | null;
-  signer: ethers.JsonRpcSigner | null;
+  provider: ethers.providers.Web3Provider | null;
+  signer: ethers.Signer | null;
   account: string | null;
   isConnected: boolean;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
+  switchToSepolia: () => Promise<void>;
   registerUserOnBlockchain: (userData: any) => Promise<any>;
   createOrganRequest: (requestData: any) => Promise<any>;
   createOrganDonation: (donationData: any) => Promise<any>;
@@ -31,14 +46,19 @@ export const useBlockchain = () => {
 
 export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [contract, setContract] = useState<ethers.Contract | null>(null);
-  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const CONTRACT_ADDRESS = '0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B';
+  
+  // Sepolia Network Configuration
+  const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+  const SEPOLIA_RPC_URL = 'https://sepolia.infura.io/v3/YOUR_INFURA_KEY';
+  const SEPOLIA_BLOCK_EXPLORER = 'https://sepolia.etherscan.io';
 
   useEffect(() => {
     // Check if wallet is already connected
@@ -81,17 +101,24 @@ export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setLoading(true);
       setError(null);
 
+      console.log('🔗 Attempting to connect wallet...');
+      console.log('MetaMask available:', !!window.ethereum);
+
       // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       });
 
+      console.log('📋 Accounts received:', accounts);
+
       if (accounts.length > 0) {
         await initializeProvider(accounts[0]);
+      } else {
+        setError('No accounts found. Please unlock MetaMask.');
       }
     } catch (error: any) {
+      console.error('❌ Wallet connection error:', error);
       setError(error.message || 'Failed to connect wallet');
-      console.error('Error connecting wallet:', error);
     } finally {
       setLoading(false);
     }
@@ -99,8 +126,15 @@ export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const initializeProvider = async (accountAddress: string) => {
     try {
-      const web3Provider = new ethers.BrowserProvider(window.ethereum);
-      const web3Signer = await web3Provider.getSigner();
+      console.log('🔧 Initializing blockchain provider...');
+      console.log('Account address:', accountAddress);
+      console.log('Contract address:', CONTRACT_ADDRESS);
+      console.log('Contract ABI available:', !!contractABI.abi);
+      
+      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+      const web3Signer = web3Provider.getSigner();
+      
+      console.log('✅ Provider and signer created successfully');
       
       // Initialize contract
       const contractInstance = new ethers.Contract(
@@ -109,16 +143,23 @@ export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         web3Signer
       );
 
+      console.log('✅ Contract instance created successfully');
+
       setProvider(web3Provider);
       setSigner(web3Signer);
       setContract(contractInstance);
       setAccount(accountAddress);
       setIsConnected(true);
       
-      console.log('Blockchain connected:', accountAddress);
-    } catch (error) {
-      console.error('Error initializing provider:', error);
-      setError('Failed to initialize blockchain connection');
+      console.log('🎉 Blockchain connected successfully:', accountAddress);
+    } catch (error: any) {
+      console.error('❌ Error initializing provider:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      setError(`Failed to initialize blockchain connection: ${error.message}`);
     }
   };
 
@@ -142,6 +183,39 @@ export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setAccount(null);
     setIsConnected(false);
     setError(null);
+  };
+
+  const switchToSepolia = async () => {
+    if (!window.ethereum) {
+      throw new Error('No wallet detected');
+    }
+
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: SEPOLIA_CHAIN_ID }],
+      });
+    } catch (error: any) {
+      if (error.code === 4902) {
+        // Network not added to wallet, add it
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: SEPOLIA_CHAIN_ID,
+            chainName: 'Ethereum Sepolia',
+            rpcUrls: [SEPOLIA_RPC_URL],
+            blockExplorerUrls: [SEPOLIA_BLOCK_EXPLORER],
+            nativeCurrency: {
+              name: 'SepoliaETH',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+          }],
+        });
+      } else {
+        throw new Error(`Failed to switch to Sepolia: ${error.message}`);
+      }
+    }
   };
 
   // Blockchain interaction functions
@@ -309,6 +383,7 @@ export const BlockchainProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     isConnected,
     connectWallet,
     disconnectWallet,
+    switchToSepolia,
     registerUserOnBlockchain,
     createOrganRequest,
     createOrganDonation,

@@ -18,7 +18,9 @@ import {
   Loader2,
   FileText,
   Cloud,
-  Link
+  Link,
+  Shield,
+  Copy
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -379,7 +381,7 @@ const TransplantFlow: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-medium">IPFS Links</h4>
+              <h4 className="font-medium">Certificate & Verification Links</h4>
               <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
@@ -387,7 +389,7 @@ const TransplantFlow: React.FC = () => {
                   onClick={() => window.open(result.certificateUrl, '_blank')}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  View Certificate
+                  View PDF Certificate
                 </Button>
                 <Button
                   variant="outline"
@@ -396,6 +398,22 @@ const TransplantFlow: React.FC = () => {
                 >
                   <FileText className="w-4 h-4 mr-2" />
                   View Metadata
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/verify/${result.ipfsResults.certificate.hash}`, '_blank')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Verify Certificate
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(result.ipfsResults.certificate.hash)}
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy IPFS Hash
                 </Button>
                 <Button
                   variant="outline"

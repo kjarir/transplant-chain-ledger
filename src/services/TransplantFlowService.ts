@@ -1,5 +1,6 @@
 import TransactionService, { TransplantTransaction, CertificateData } from './TransactionService';
 import CertificateService from './CertificateService';
+import PDFCertificateService from './PDFCertificateService';
 import PinataService, { PinataUploadResult } from './PinataService';
 import { ethers } from 'ethers';
 
@@ -43,7 +44,7 @@ class TransplantFlowService {
   /**
    * Initialize with blockchain connection
    */
-  initialize(contract: ethers.Contract, signer: ethers.JsonRpcSigner) {
+  initialize(contract: ethers.Contract, signer: ethers.Signer) {
     this.transactionService = new TransactionService(contract, signer);
   }
 
@@ -91,15 +92,28 @@ class TransplantFlowService {
 
       console.log(`✅ Certificate generated: ${certificateData.certificateNumber}`);
 
-      // Step 3: Generate certificate HTML
-      console.log('🎨 Step 3: Generating certificate HTML...');
-      const certificateHTML = this.certificateService.generateHTMLCertificate(certificateData);
+      // Step 3: Generate PDF certificate
+      console.log('📄 Step 3: Generating PDF certificate...');
+      const pdfCertificateService = new PDFCertificateService();
+      const pdfResult = await pdfCertificateService.generateCertificate({
+        certificateNumber: certificateData.certificateNumber,
+        patientName: certificateData.patientName,
+        donorName: certificateData.donorName,
+        organType: certificateData.organType,
+        transplantDate: certificateData.transplantDate,
+        hospitalName: certificateData.hospitalName,
+        doctorName: certificateData.doctorName,
+        transactionHash: certificateData.blockchainHash,
+        contractAddress: '0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B',
+        patientEmail: input.patientEmail,
+        donorEmail: input.donorEmail
+      });
 
-      console.log('✅ Certificate HTML generated');
+      console.log('✅ PDF certificate generated successfully');
 
-      // Step 4: Upload certificate to Pinata IPFS
-      console.log('☁️ Step 4: Uploading certificate to IPFS...');
-      const certificateUpload = await this.pinataService.uploadCertificate(certificateHTML, {
+      // Step 4: Upload PDF certificate to Pinata IPFS
+      console.log('☁️ Step 4: Uploading PDF certificate to IPFS...');
+      const certificateUpload = await this.pinataService.uploadCertificatePDF(pdfResult.pdfBlob, {
         certificateNumber: certificateData.certificateNumber,
         patientName: input.patientName,
         donorName: input.donorName,
@@ -137,7 +151,7 @@ class TransplantFlowService {
         success: true,
         transaction,
         certificateData,
-        certificateHTML,
+        certificateHTML: pdfResult.pdfUrl, // PDF URL instead of HTML
         ipfsResults: {
           certificate: certificateUpload,
           metadata: metadataUpload

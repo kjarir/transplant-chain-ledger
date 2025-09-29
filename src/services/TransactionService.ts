@@ -29,9 +29,9 @@ export interface CertificateData {
 
 class TransactionService {
   private contract: ethers.Contract | null = null;
-  private signer: ethers.JsonRpcSigner | null = null;
+  private signer: ethers.Signer | null = null;
 
-  constructor(contract: ethers.Contract, signer: ethers.JsonRpcSigner) {
+  constructor(contract: ethers.Contract, signer: ethers.Signer) {
     this.contract = contract;
     this.signer = signer;
   }
@@ -43,22 +43,51 @@ class TransactionService {
     try {
       const currentUserAddress = await this.signer.getAddress();
       
+      console.log('🔐 Registering user on contract:', {
+        address: currentUserAddress,
+        contractAddress: this.contract?.address
+      });
+      
       // Register user with default doctor role and minimal data
+      const currentTimestamp = Math.floor(Date.now() / 1000) - (30 * 365 * 24 * 60 * 60); // 30 years ago
+      
+      console.log('📝 Calling registerUser with params:', {
+        fullName: 'Doctor User',
+        role: 2, // UserRole.DOCTOR
+        phone: '',
+        address: '',
+        dateOfBirth: currentTimestamp,
+        bloodType: '',
+        medicalHistory: '',
+        emergencyContact: ''
+      });
+      
       const tx = await this.contract.registerUser(
         'Doctor User', // fullName
         2, // UserRole.DOCTOR
         '', // phone
         '', // physicalAddress
-        0, // dateOfBirth
+        currentTimestamp, // dateOfBirth (30 years ago)
         '', // bloodType
         '', // medicalHistory
         '' // emergencyContact
       );
       
-      await tx.wait();
-      console.log('✅ User registered on contract successfully');
+      console.log('⏳ Waiting for transaction confirmation...');
+      const receipt = await tx.wait();
+      console.log('✅ User registered on contract successfully!', {
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
     } catch (error: any) {
       console.error('❌ Error registering user on contract:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        reason: error.reason,
+        method: error.method
+      });
       throw error;
     }
   }
@@ -118,7 +147,7 @@ class TransactionService {
         doctorNotes: transactionData.doctorNotes
       });
       
-      console.log('Calling recordTransaction with params:', {
+      console.log('📝 Calling recordTransaction with params:', {
         transactionHash,
         transactionType,
         patientAddress: transactionData.patientAddress,
@@ -128,7 +157,7 @@ class TransactionService {
         status,
         metadata
       });
-      
+
       // Record transaction on blockchain using the actual contract function
       const tx = await this.contract.recordTransaction(
         transactionHash,
@@ -141,7 +170,13 @@ class TransactionService {
         metadata
       );
 
+      console.log('⏳ Waiting for transaction confirmation...');
       const receipt = await tx.wait();
+      console.log('✅ Transaction recorded successfully!', {
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
       
       // Extract transaction details
       const transaction: TransplantTransaction = {
@@ -162,6 +197,27 @@ class TransactionService {
 
     } catch (error: any) {
       console.error('❌ Error recording transplant transaction:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        reason: error.reason,
+        method: error.method,
+        transaction: error.transaction
+      });
+      
+      // Provide more specific error messages
+      if (error.message?.includes('User already registered')) {
+        throw new Error('User is already registered on the contract');
+      } else if (error.message?.includes('User not registered')) {
+        throw new Error('User needs to be registered on the contract first');
+      } else if (error.message?.includes('insufficient funds')) {
+        throw new Error('Insufficient funds for gas fees');
+      } else if (error.message?.includes('user rejected')) {
+        throw new Error('Transaction was rejected by user');
+      } else if (error.message?.includes('network')) {
+        throw new Error('Network error. Please check your connection and try again');
+      }
+      
       throw new Error(`Failed to record transaction: ${error.message}`);
     }
   }

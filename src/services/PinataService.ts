@@ -84,7 +84,120 @@ class PinataService {
   }
 
   /**
-   * Upload certificate HTML to Pinata IPFS
+   * Upload certificate PDF to Pinata IPFS
+   */
+  async uploadCertificatePDF(pdfBlob: Blob, metadata: {
+    certificateNumber: string;
+    patientName: string;
+    donorName: string;
+    organType: string;
+    transactionHash: string;
+    patientEmail?: string;
+    donorEmail?: string;
+  }): Promise<PinataUploadResult> {
+    if (!this.jwtToken && (!this.apiKey || !this.secretKey)) {
+      throw new Error('Pinata credentials not configured');
+    }
+
+    try {
+      console.log('📤 Uploading PDF certificate to Pinata IPFS...');
+      
+      // Test authentication first
+      const authTest = await this.testAuthentication();
+      if (!authTest) {
+        throw new Error('Pinata authentication failed');
+      }
+      
+      // Create FormData
+      const formData = new FormData();
+      
+      console.log('PDF size:', pdfBlob.size, 'bytes');
+      
+      formData.append('file', pdfBlob, `certificate-${metadata.certificateNumber}.pdf`);
+      
+      // Add minimal metadata to avoid limits
+      formData.append('pinataMetadata', JSON.stringify({
+        name: `cert-${metadata.certificateNumber}`,
+        keyvalues: {
+          type: 'cert-pdf',
+          tx: metadata.transactionHash
+        }
+      }));
+      
+      // Add options
+      formData.append('pinataOptions', JSON.stringify({
+        cidVersion: 0,
+        wrapWithDirectory: false
+      }));
+
+      // Upload to Pinata - try API key + secret first
+      console.log('Uploading to Pinata with credentials:', {
+        apiKey: !!this.apiKey,
+        secretKey: !!this.secretKey,
+        jwt: !!this.jwtToken
+      });
+      console.log('FormData contents:', Array.from(formData.entries()).map(([key, value]) => ({ key, valueType: typeof value })));
+      
+      let response;
+      if (this.apiKey && this.secretKey) {
+        try {
+          console.log('Using API key + secret authentication...');
+          response = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+            headers: {
+              'pinata_api_key': this.apiKey,
+              'pinata_secret_api_key': this.secretKey
+              // Content-Type will be set automatically by axios for FormData
+            }
+          });
+        } catch (apiError: any) {
+          if (apiError.response?.status === 401 && this.jwtToken) {
+            console.log('API key + secret failed, falling back to JWT...');
+            response = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+              headers: {
+                'Authorization': `Bearer ${this.jwtToken}`
+                // Content-Type will be set automatically by axios for FormData
+              }
+            });
+          } else {
+            throw apiError;
+          }
+        }
+      } else if (this.jwtToken) {
+        console.log('Using JWT authentication...');
+        response = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+          headers: {
+            'Authorization': `Bearer ${this.jwtToken}`
+            // Content-Type will be set automatically by axios for FormData
+          }
+        });
+      } else {
+        throw new Error('No Pinata credentials configured');
+      }
+
+      const { IpfsHash, PinSize, Timestamp } = response.data;
+      
+      const result: PinataUploadResult = {
+        hash: IpfsHash,
+        size: PinSize,
+        timestamp: Timestamp,
+        url: `${this.gateway}${IpfsHash}`
+      };
+
+      console.log('✅ PDF certificate uploaded successfully!');
+      console.log(`🔗 IPFS Hash: ${IpfsHash}`);
+      console.log(`📏 Size: ${PinSize} bytes`);
+      console.log(`🌐 Access URL: ${result.url}`);
+      
+      return result;
+      
+    } catch (error: any) {
+      console.error('❌ PDF certificate upload failed:', error.response?.data || error.message);
+      throw new Error(`Failed to upload PDF certificate: ${error.message}`);
+    }
+  }
+
+  /**
+   * Upload certificate HTML to Pinata IPFS (legacy method)
    */
   async uploadCertificate(certificateHTML: string, metadata: {
     certificateNumber: string;

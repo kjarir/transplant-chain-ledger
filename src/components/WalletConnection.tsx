@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBlockchain } from '@/contexts/BlockchainContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wallet, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Wallet, CheckCircle, AlertCircle, Loader2, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { getWalletInfo } from '@/utils/walletUtils';
 
 const WalletConnection: React.FC = () => {
   const {
@@ -14,6 +15,23 @@ const WalletConnection: React.FC = () => {
     loading,
     error
   } = useBlockchain();
+  
+  const [walletInfo, setWalletInfo] = useState<any>(null);
+  const [debugMode, setDebugMode] = useState(false);
+
+  useEffect(() => {
+    const checkWalletInfo = async () => {
+      try {
+        const info = await getWalletInfo();
+        setWalletInfo(info);
+        console.log('🔍 Wallet info:', info);
+      } catch (error) {
+        console.error('Error getting wallet info:', error);
+      }
+    };
+    
+    checkWalletInfo();
+  }, []);
 
   const handleConnect = async () => {
     try {
@@ -113,6 +131,32 @@ const WalletConnection: React.FC = () => {
 
         <div className="text-xs text-muted-foreground text-center">
           Contract Address: 0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B
+        </div>
+        
+        {/* Debug Information */}
+        <div className="mt-4 pt-4 border-t">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDebugMode(!debugMode)}
+            className="w-full text-xs"
+          >
+            <Info className="w-3 h-3 mr-1" />
+            {debugMode ? 'Hide' : 'Show'} Debug Info
+          </Button>
+          
+          {debugMode && walletInfo && (
+            <div className="mt-2 p-2 bg-gray-100 rounded text-xs space-y-1">
+              <p><strong>Wallet:</strong> {walletInfo.name}</p>
+              <p><strong>Installed:</strong> {walletInfo.installed ? 'Yes' : 'No'}</p>
+              <p><strong>Network:</strong> {walletInfo.network || 'Unknown'}</p>
+              <p><strong>Connected:</strong> {walletInfo.connected ? 'Yes' : 'No'}</p>
+              <p><strong>Accounts:</strong> {walletInfo.accounts.length}</p>
+              {walletInfo.accounts.length > 0 && (
+                <p><strong>Account:</strong> {walletInfo.accounts[0]}</p>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
