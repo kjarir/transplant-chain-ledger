@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { LiveOrganTrackingService, LiveOrgan } from "@/services/LiveOrganTrackingService";
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,20 +27,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-interface OrganLocation {
-  id: string;
-  name: string;
-  organType: string;
-  organLabel: string;
-  position: [number, number];
-  availableCount: number;
-  criticalCount: number;
-  lastUpdated: string;
-  contact: string;
-  icon: React.ComponentType<any>;
-  color: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-}
+// Remove the old interface as we'll use LiveOrgan from the service
 
 // Custom icon component for map markers
 const createCustomIcon = (color: string, organType: string) => {
@@ -60,19 +48,22 @@ const createCustomIcon = (color: string, organType: string) => {
   });
 };
 
-const MapController = ({ selectedOrgan, organLocations }: { selectedOrgan: string; organLocations: OrganLocation[] }) => {
+const MapController = ({ selectedOrgan, organLocations }: { selectedOrgan: string; organLocations: LiveOrgan[] }) => {
   const map = useMap();
   
   useEffect(() => {
     if (selectedOrgan && selectedOrgan !== 'all') {
-      const filteredLocations = organLocations.filter(loc => loc.organType === selectedOrgan);
+      const filteredLocations = organLocations.filter(loc => loc.organ_type === selectedOrgan && loc.latitude && loc.longitude);
       if (filteredLocations.length > 0) {
-        const bounds = L.latLngBounds(filteredLocations.map(loc => loc.position));
+        const bounds = L.latLngBounds(filteredLocations.map(loc => [loc.latitude!, loc.longitude!]));
         map.fitBounds(bounds, { padding: [20, 20] });
       }
     } else {
-      const bounds = L.latLngBounds(organLocations.map(loc => loc.position));
-      map.fitBounds(bounds, { padding: [20, 20] });
+      const validLocations = organLocations.filter(loc => loc.latitude && loc.longitude);
+      if (validLocations.length > 0) {
+        const bounds = L.latLngBounds(validLocations.map(loc => [loc.latitude!, loc.longitude!]));
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
     }
   }, [selectedOrgan, organLocations, map]);
 
@@ -81,200 +72,38 @@ const MapController = ({ selectedOrgan, organLocations }: { selectedOrgan: strin
 
 const OrganAvailabilityMap = () => {
   const [selectedOrgan, setSelectedOrgan] = useState<string>('all');
-  const [organLocations, setOrganLocations] = useState<OrganLocation[]>([]);
+  const [organLocations, setOrganLocations] = useState<LiveOrgan[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapKey, setMapKey] = useState(0);
 
-  // Mock data - in real app, this would come from your blockchain/backend
   useEffect(() => {
-    const mockLocations: OrganLocation[] = [
-      {
-        id: '1',
-        name: 'New York Medical Center',
-        organType: 'heart',
-        organLabel: 'Heart',
-        position: [40.7128, -74.0060],
-        availableCount: 2,
-        criticalCount: 2,
-        lastUpdated: '2 minutes ago',
-        contact: '+1 (555) 123-4567',
-        icon: Heart,
-        color: '#ef4444',
-        priority: 'critical'
-      },
-      {
-        id: '2',
-        name: 'California Transplant Institute',
-        organType: 'heart',
-        organLabel: 'Heart',
-        position: [34.0522, -118.2437],
-        availableCount: 1,
-        criticalCount: 1,
-        lastUpdated: '5 minutes ago',
-        contact: '+1 (555) 234-5678',
-        icon: Heart,
-        color: '#ef4444',
-        priority: 'critical'
-      },
-      {
-        id: '3',
-        name: 'Texas Heart Center',
-        organType: 'heart',
-        organLabel: 'Heart',
-        position: [29.7604, -95.3698],
-        availableCount: 1,
-        criticalCount: 1,
-        lastUpdated: '3 minutes ago',
-        contact: '+1 (555) 345-6789',
-        icon: Heart,
-        color: '#ef4444',
-        priority: 'critical'
-      },
-      {
-        id: '4',
-        name: 'Florida Liver Institute',
-        organType: 'liver',
-        organLabel: 'Liver',
-        position: [25.7617, -80.1918],
-        availableCount: 2,
-        criticalCount: 1,
-        lastUpdated: '4 minutes ago',
-        contact: '+1 (555) 456-7890',
-        icon: Activity,
-        color: '#f97316',
-        priority: 'critical'
-      },
-      {
-        id: '5',
-        name: 'Illinois Organ Center',
-        organType: 'liver',
-        organLabel: 'Liver',
-        position: [41.8781, -87.6298],
-        availableCount: 2,
-        criticalCount: 1,
-        lastUpdated: '6 minutes ago',
-        contact: '+1 (555) 567-8901',
-        icon: Activity,
-        color: '#f97316',
-        priority: 'critical'
-      },
-      {
-        id: '6',
-        name: 'Washington Kidney Center',
-        organType: 'liver',
-        organLabel: 'Liver',
-        position: [47.6062, -122.3321],
-        availableCount: 1,
-        criticalCount: 0,
-        lastUpdated: '8 minutes ago',
-        contact: '+1 (555) 678-9012',
-        icon: Activity,
-        color: '#f97316',
-        priority: 'high'
-      },
-      {
-        id: '7',
-        name: 'Ohio Kidney Institute',
-        organType: 'kidney',
-        organLabel: 'Kidney',
-        position: [39.9612, -82.9988],
-        availableCount: 4,
-        criticalCount: 2,
-        lastUpdated: '1 minute ago',
-        contact: '+1 (555) 789-0123',
-        icon: Users,
-        color: '#3b82f6',
-        priority: 'high'
-      },
-      {
-        id: '8',
-        name: 'Pennsylvania Transplant Center',
-        organType: 'kidney',
-        organLabel: 'Kidney',
-        position: [39.9526, -75.1652],
-        availableCount: 3,
-        criticalCount: 1,
-        lastUpdated: '2 minutes ago',
-        contact: '+1 (555) 890-1234',
-        icon: Users,
-        color: '#3b82f6',
-        priority: 'high'
-      },
-      {
-        id: '9',
-        name: 'Michigan Medical Center',
-        organType: 'kidney',
-        organLabel: 'Kidney',
-        position: [42.3314, -83.0458],
-        availableCount: 3,
-        criticalCount: 1,
-        lastUpdated: '3 minutes ago',
-        contact: '+1 (555) 901-2345',
-        icon: Users,
-        color: '#3b82f6',
-        priority: 'high'
-      },
-      {
-        id: '10',
-        name: 'Georgia Organ Bank',
-        organType: 'kidney',
-        organLabel: 'Kidney',
-        position: [33.7490, -84.3880],
-        availableCount: 2,
-        criticalCount: 0,
-        lastUpdated: '4 minutes ago',
-        contact: '+1 (555) 012-3456',
-        icon: Users,
-        color: '#3b82f6',
-        priority: 'medium'
-      },
-      {
-        id: '11',
-        name: 'Colorado Lung Center',
-        organType: 'lung',
-        organLabel: 'Lung',
-        position: [39.7392, -104.9903],
-        availableCount: 1,
-        criticalCount: 1,
-        lastUpdated: '5 minutes ago',
-        contact: '+1 (555) 123-4567',
-        icon: TrendingUp,
-        color: '#8b5cf6',
-        priority: 'critical'
-      },
-      {
-        id: '12',
-        name: 'Arizona Pulmonary Institute',
-        organType: 'lung',
-        organLabel: 'Lung',
-        position: [33.4484, -112.0740],
-        availableCount: 1,
-        criticalCount: 1,
-        lastUpdated: '7 minutes ago',
-        contact: '+1 (555) 234-5678',
-        icon: TrendingUp,
-        color: '#8b5cf6',
-        priority: 'critical'
-      },
-      {
-        id: '13',
-        name: 'Massachusetts Pancreas Center',
-        organType: 'pancreas',
-        organLabel: 'Pancreas',
-        position: [42.3601, -71.0589],
-        availableCount: 1,
-        criticalCount: 0,
-        lastUpdated: '10 minutes ago',
-        contact: '+1 (555) 345-6789',
-        icon: Zap,
-        color: '#10b981',
-        priority: 'high'
+    loadLiveOrgans();
+    
+    // Subscribe to real-time updates
+    const unsubscribe = LiveOrganTrackingService.subscribeToLiveUpdates(
+      'map',
+      (organs) => {
+        setOrganLocations(organs);
+        setMapKey(prev => prev + 1); // Force map re-render
       }
-    ];
+    );
 
-    setOrganLocations(mockLocations);
-    setLoading(false);
+    return () => {
+      unsubscribe();
+    };
   }, []);
+
+  const loadLiveOrgans = async () => {
+    setLoading(true);
+    try {
+      const organs = await LiveOrganTrackingService.getLiveOrgans();
+      setOrganLocations(organs);
+    } catch (error) {
+      console.error('Error loading live organs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const organTypes = [
     { value: 'all', label: 'All Organs' },
@@ -290,12 +119,11 @@ const OrganAvailabilityMap = () => {
 
   const filteredLocations = selectedOrgan === 'all' 
     ? organLocations 
-    : organLocations.filter(loc => loc.organType === selectedOrgan);
+    : organLocations.filter(loc => loc.organ_type === selectedOrgan);
 
   const handleRefresh = () => {
-    setLoading(true);
     setMapKey(prev => prev + 1);
-    setTimeout(() => setLoading(false), 1000);
+    loadLiveOrgans();
   };
 
   if (loading) {
@@ -357,25 +185,25 @@ const OrganAvailabilityMap = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-red-50 rounded-lg">
               <div className="text-2xl font-bold text-red-600">
-                {filteredLocations.filter(loc => loc.priority === 'critical').length}
+                {filteredLocations.filter(loc => loc.urgency === 'critical').length}
               </div>
-              <div className="text-sm text-red-700">Critical Centers</div>
+              <div className="text-sm text-red-700">Critical Priority</div>
             </div>
             <div className="text-center p-3 bg-orange-50 rounded-lg">
               <div className="text-2xl font-bold text-orange-600">
-                {filteredLocations.reduce((sum, loc) => sum + loc.availableCount, 0)}
+                {filteredLocations.filter(loc => loc.status === 'available').length}
               </div>
-              <div className="text-sm text-orange-700">Total Available</div>
+              <div className="text-sm text-orange-700">Available Now</div>
             </div>
             <div className="text-center p-3 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {filteredLocations.reduce((sum, loc) => sum + loc.criticalCount, 0)}
+                {filteredLocations.filter(loc => loc.status === 'matched').length}
               </div>
-              <div className="text-sm text-blue-700">Critical Need</div>
+              <div className="text-sm text-blue-700">Matched</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {filteredLocations.length}
+                {new Set(filteredLocations.map(loc => loc.medical_center_id).filter(Boolean)).size}
               </div>
               <div className="text-sm text-green-700">Active Centers</div>
             </div>
@@ -396,46 +224,87 @@ const OrganAvailabilityMap = () => {
               
               <MapController selectedOrgan={selectedOrgan} organLocations={filteredLocations} />
               
-              {filteredLocations.map((location) => (
-                <Marker
-                  key={location.id}
-                  position={location.position}
-                  icon={createCustomIcon(location.color, location.organType)}
-                >
-                  <Popup>
-                    <div className="p-2 min-w-[250px]">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <location.icon className={`w-4 h-4 ${location.color}`} />
-                        <h3 className="font-semibold">{location.name}</h3>
+              {filteredLocations.filter(loc => loc.latitude && loc.longitude).map((location) => {
+                const getOrganColor = (organType: string) => {
+                  switch (organType) {
+                    case 'heart': return '#ef4444';
+                    case 'liver': return '#f97316';
+                    case 'kidney': return '#3b82f6';
+                    case 'lung': return '#8b5cf6';
+                    case 'pancreas': return '#10b981';
+                    default: return '#6b7280';
+                  }
+                };
+
+                const getUrgencyColor = (urgency: string) => {
+                  switch (urgency) {
+                    case 'critical': return '#ef4444';
+                    case 'high': return '#f97316';
+                    case 'medium': return '#3b82f6';
+                    case 'low': return '#10b981';
+                    default: return '#6b7280';
+                  }
+                };
+
+                return (
+                  <Marker
+                    key={location.id}
+                    position={[location.latitude!, location.longitude!]}
+                    icon={createCustomIcon(getUrgencyColor(location.urgency), location.organ_type)}
+                  >
+                    <Popup>
+                      <div className="p-2 min-w-[250px]">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div 
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: getOrganColor(location.organ_type) }}
+                          />
+                          <h3 className="font-semibold">{location.location_name}</h3>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Status:</span>
+                            <Badge variant={location.status === 'available' ? "secondary" : "outline"} 
+                                   className={location.status === 'available' ? "bg-green-100 text-green-800" : ""}>
+                              {location.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Urgency:</span>
+                            <Badge variant={location.urgency === 'critical' ? "destructive" : "outline"}>
+                              {location.urgency}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Organ:</span>
+                            <span className="font-medium">{location.organ_label}</span>
+                          </div>
+                          {location.blood_type && (
+                            <div className="flex justify-between">
+                              <span>Blood Type:</span>
+                              <span className="font-medium">{location.blood_type}</span>
+                            </div>
+                          )}
+                          {location.time_remaining && (
+                            <div className="flex justify-between">
+                              <span>Time Left:</span>
+                              <span className="font-medium">{location.time_remaining}h</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-2">
+                            Updated: {new Date(location.updated_at).toLocaleString()}
+                          </div>
+                          {location.contact_info && (
+                            <div className="text-xs text-gray-500">
+                              Contact: {location.contact_info}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span>Available:</span>
-                          <Badge variant="outline" className="text-green-600">
-                            {location.availableCount}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Critical Need:</span>
-                          <Badge variant={location.criticalCount > 0 ? "destructive" : "outline"}>
-                            {location.criticalCount}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Organ:</span>
-                          <span className="font-medium">{location.organLabel}</span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-2">
-                          Updated: {location.lastUpdated}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Contact: {location.contact}
-                        </div>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+                    </Popup>
+                  </Marker>
+                );
+              })}
             </MapContainer>
           </div>
 

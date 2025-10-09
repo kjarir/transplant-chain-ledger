@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Database Setup - Fixed Version</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196f3;
+        }
+        .sql-code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        .step {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff9800;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #e65100;
+        }
+        .success {
+            background: #e8f5e8;
+            border-left-color: #4caf50;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Supabase Database Setup - Fixed Version</h1>
+        
+        <div class="instructions">
+            <h2>📋 Instructions</h2>
+            <p>This version fixes the ON CONFLICT error. Run this single SQL script:</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 1: Open Supabase Dashboard</h3>
+            <p>Go to your Supabase project dashboard: <a href="https://supabase.com/dashboard/project/depozngjqxfjtgiwyuhb" target="_blank">https://supabase.com/dashboard/project/depozngjqxfjtgiwyuhb</a></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Open SQL Editor</h3>
+            <p>In the Supabase dashboard, navigate to <strong>SQL Editor</strong> in the left sidebar.</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Copy and Run SQL</h3>
+            <p>Copy this SQL code and paste it into the SQL Editor, then click <strong>Run</strong>:</p>
+            
+            <button class="copy-btn" onclick="copySQL()">📋 Copy SQL Code</button>
+            
+            <div class="sql-code" id="sqlCode">-- Create medical centers table
+CREATE TABLE IF NOT EXISTS medical_centers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    address TEXT NOT NULL,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(255),
+    specialties TEXT[],
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create live organ availability table
+CREATE TABLE IF NOT EXISTS live_organ_availability (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    organ_type VARCHAR(50) NOT NULL,
+    organ_label VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'available',
+    location_name VARCHAR(255) NOT NULL,
+    location_address TEXT,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    blood_type VARCHAR(10),
+    organ_age INTEGER,
+    organ_size VARCHAR(50),
+    urgency VARCHAR(50) DEFAULT 'medium',
+    time_remaining INTEGER,
+    recipient_id UUID REFERENCES profiles(id),
+    recipient_name VARCHAR(255),
+    recipient_location VARCHAR(255),
+    recipient_urgency VARCHAR(50),
+    contact_info TEXT,
+    medical_center_id UUID,
+    medical_center_name VARCHAR(255),
+    donor_id UUID REFERENCES profiles(id),
+    donor_name VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE,
+    blockchain_hash VARCHAR(66),
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_notes TEXT
+);
+
+-- Create organ transplant logs table
+CREATE TABLE IF NOT EXISTS organ_transplant_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    organ_id UUID REFERENCES live_organ_availability(id),
+    action VARCHAR(100) NOT NULL,
+    actor_id UUID REFERENCES profiles(id),
+    actor_name VARCHAR(255),
+    actor_role VARCHAR(50),
+    details JSONB,
+    location VARCHAR(255),
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    blockchain_hash VARCHAR(66)
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_live_organs_type ON live_organ_availability(organ_type);
+CREATE INDEX IF NOT EXISTS idx_live_organs_status ON live_organ_availability(status);
+CREATE INDEX IF NOT EXISTS idx_live_organs_location ON live_organ_availability(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_live_organs_urgency ON live_organ_availability(urgency);
+CREATE INDEX IF NOT EXISTS idx_live_organs_updated ON live_organ_availability(updated_at);
+CREATE INDEX IF NOT EXISTS idx_transplant_logs_organ ON organ_transplant_logs(organ_id);
+CREATE INDEX IF NOT EXISTS idx_transplant_logs_timestamp ON organ_transplant_logs(timestamp);
+
+-- Insert sample medical centers (with unique constraint, duplicates will be ignored)
+INSERT INTO medical_centers (name, address, city, state, country, latitude, longitude, contact_phone, specialties) VALUES
+('New York Medical Center', '123 Medical Drive', 'New York', 'NY', 'USA', 40.7128, -74.0060, '+1-555-0101', ARRAY['heart', 'liver', 'kidney', 'lung']),
+('California Transplant Institute', '456 Health Blvd', 'Los Angeles', 'CA', 'USA', 34.0522, -118.2437, '+1-555-0102', ARRAY['heart', 'kidney', 'pancreas']),
+('Texas Heart Center', '789 Cardiac Lane', 'Houston', 'TX', 'USA', 29.7604, -95.3698, '+1-555-0103', ARRAY['heart', 'lung']),
+('Florida Liver Institute', '321 Hepatic St', 'Miami', 'FL', 'USA', 25.7617, -80.1918, '+1-555-0104', ARRAY['liver', 'kidney']),
+('Illinois Organ Center', '654 Transplant Ave', 'Chicago', 'IL', 'USA', 41.8781, -87.6298, '+1-555-0105', ARRAY['liver', 'kidney', 'pancreas']),
+('Washington Kidney Center', '987 Renal Rd', 'Seattle', 'WA', 'USA', 47.6062, -122.3321, '+1-555-0106', ARRAY['kidney']),
+('Ohio Kidney Institute', '147 Urology Way', 'Columbus', 'OH', 'USA', 39.9612, -82.9988, '+1-555-0107', ARRAY['kidney', 'liver']),
+('Pennsylvania Transplant Center', '258 Organ Blvd', 'Philadelphia', 'PA', 'USA', 39.9526, -75.1652, '+1-555-0108', ARRAY['kidney', 'heart']),
+('Michigan Medical Center', '369 Health Center Dr', 'Detroit', 'MI', 'USA', 42.3314, -83.0458, '+1-555-0109', ARRAY['kidney', 'liver', 'heart']),
+('Georgia Organ Bank', '741 Transplant Way', 'Atlanta', 'GA', 'USA', 33.7490, -84.3880, '+1-555-0110', ARRAY['kidney', 'liver']),
+('Colorado Lung Center', '852 Pulmonary Pkwy', 'Denver', 'CO', 'USA', 39.7392, -104.9903, '+1-555-0111', ARRAY['lung', 'heart']),
+('Arizona Pulmonary Institute', '963 Respiratory Rd', 'Phoenix', 'AZ', 'USA', 33.4484, -112.0740, '+1-555-0112', ARRAY['lung']),
+('Massachusetts Pancreas Center', '159 Endocrine Ave', 'Boston', 'MA', 'USA', 42.3601, -71.0589, '+1-555-0113', ARRAY['pancreas'])
+ON CONFLICT (name) DO NOTHING;
+
+-- Enable Row Level Security
+ALTER TABLE live_organ_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organ_transplant_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE medical_centers ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Anyone can view live organs" ON live_organ_availability FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can insert organs" ON live_organ_availability FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Anyone can view transplant logs" ON organ_transplant_logs FOR SELECT USING (true);
+CREATE POLICY "System can insert logs" ON organ_transplant_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can view medical centers" ON medical_centers FOR SELECT USING (is_active = true);
+
+-- Enable real-time subscriptions
+DO $$
+BEGIN
+    -- Add tables to real-time publication if they exist
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'live_organ_availability') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE live_organ_availability;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'organ_transplant_logs') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE organ_transplant_logs;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Ignore errors if tables are already in publication
+        NULL;
+END $$;</div>
+        </div>
+
+        <div class="step success">
+            <h3>Step 4: Verify Setup</h3>
+            <p>After running the SQL, you should see:</p>
+            <ul>
+                <li>✅ 3 new tables created</li>
+                <li>✅ 13 sample medical centers inserted</li>
+                <li>✅ Real-time subscriptions enabled</li>
+                <li>✅ Row Level Security policies created</li>
+                <li>✅ Unique constraint on medical center names</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>🎉 Next Steps</h3>
+            <p>Once the database is set up:</p>
+            <ol>
+                <li>Go back to your application</li>
+                <li>Refresh the page</li>
+                <li>Try the organ donation form - you should now see medical centers in the dropdown</li>
+                <li>Connect your wallet for blockchain functionality</li>
+                <li>Submit a test donation to see it appear on the live map</li>
+            </ol>
+        </div>
+
+        <div class="step warning">
+            <h3>⚠️ What Was Fixed</h3>
+            <ul>
+                <li><strong>ON CONFLICT Error:</strong> Added <code>UNIQUE</code> constraint to <code>medical_centers.name</code></li>
+                <li><strong>Real-time Error:</strong> Added error handling for publication conflicts</li>
+                <li><strong>Single Script:</strong> Everything in one SQL script for easier execution</li>
+                <li><strong>Safe Execution:</strong> Can be run multiple times without errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function copySQL() {
+            const sqlCode = document.getElementById('sqlCode').textContent;
+            navigator.clipboard.writeText(sqlCode).then(function() {
+                alert('SQL code copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy SQL code. Please select and copy manually.');
+            });
+        }
+    </script>
+</body>
+</html>

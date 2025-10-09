@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, Heart, Activity, TrendingUp, AlertTriangle, CheckCircle, Eye, BookOpen } from "lucide-react";
+import { Shield, Users, Heart, Activity, TrendingUp, AlertTriangle, CheckCircle, Eye, BookOpen, Database } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import BlogManagement from "@/components/BlogManagement";
+import { DatabaseInitializer } from "@/services/DatabaseInitializer";
 
 interface Profile {
   id: string;
@@ -138,6 +139,48 @@ const AdminDashboard = ({ profile }: { profile: Profile }) => {
     }
   };
 
+  const initializeLiveTracking = async () => {
+    try {
+      const success = await DatabaseInitializer.initializeDatabase();
+      if (success) {
+        toast({
+          title: "Database Initialized",
+          description: "Live organ tracking database has been set up successfully."
+        });
+      } else {
+        throw new Error('Database initialization failed');
+      }
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      toast({
+        title: "Initialization Failed",
+        description: "Failed to initialize live tracking database",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addSampleData = async () => {
+    try {
+      const success = await DatabaseInitializer.addSampleOrgans();
+      if (success) {
+        toast({
+          title: "Sample Data Added",
+          description: "Sample organs have been added to the live tracking system."
+        });
+      } else {
+        throw new Error('Sample data addition failed');
+      }
+    } catch (error) {
+      console.error('Error adding sample data:', error);
+      toast({
+        title: "Sample Data Failed",
+        description: "Failed to add sample organs",
+        variant: "destructive"
+      });
+    }
+  };
+
   const systemMetrics = [
     {
       title: "Total Users",
@@ -247,13 +290,17 @@ const AdminDashboard = ({ profile }: { profile: Profile }) => {
 
       {/* Detailed Management */}
       <Tabs defaultValue="transactions" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
           <TabsTrigger value="transactions">Blockchain</TabsTrigger>
           <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           <TabsTrigger value="certificates">Certificates</TabsTrigger>
           <TabsTrigger value="content" className="flex items-center space-x-1">
             <BookOpen className="w-4 h-4" />
             <span>Content</span>
+          </TabsTrigger>
+          <TabsTrigger value="database" className="flex items-center space-x-1">
+            <Database className="w-4 h-4" />
+            <span>Database</span>
           </TabsTrigger>
         </TabsList>
 
@@ -374,6 +421,94 @@ const AdminDashboard = ({ profile }: { profile: Profile }) => {
 
         <TabsContent value="content" className="space-y-6">
           <BlogManagement />
+        </TabsContent>
+
+        <TabsContent value="database" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Database Management</h2>
+            <Badge variant="outline" className="bg-blue-500 text-white">
+              Live Tracking Setup
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Database className="w-5 h-5" />
+                  <span>Initialize Database</span>
+                </CardTitle>
+                <CardDescription>
+                  Set up the live organ tracking database with medical centers and tables
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    This will create the necessary tables and medical centers for live organ tracking.
+                  </p>
+                  <Button onClick={initializeLiveTracking} className="w-full">
+                    <Database className="w-4 h-4 mr-2" />
+                    Initialize Database
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5" />
+                  <span>Add Sample Data</span>
+                </CardTitle>
+                <CardDescription>
+                  Add sample organs to test the live tracking system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    This will add sample organs to demonstrate the live tracking functionality.
+                  </p>
+                  <Button onClick={addSampleData} variant="outline" className="w-full">
+                    <Heart className="w-4 h-4 mr-2" />
+                    Add Sample Organs
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Tracking Features</CardTitle>
+              <CardDescription>
+                Once initialized, the system will support:
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Real-time Features:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Live organ availability tracking</li>
+                    <li>• Real-time map updates</li>
+                    <li>• Automatic status changes</li>
+                    <li>• Location-based organ matching</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Database Tables:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• live_organ_availability</li>
+                    <li>• medical_centers</li>
+                    <li>• organ_transplant_logs</li>
+                    <li>• Real-time subscriptions</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

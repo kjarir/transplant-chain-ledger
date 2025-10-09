@@ -19,27 +19,7 @@ import {
   Eye
 } from "lucide-react";
 import OrganAvailabilityMap from "./OrganAvailabilityMap";
-
-interface LiveOrgan {
-  id: string;
-  organType: string;
-  organLabel: string;
-  status: 'available' | 'in_transit' | 'matched' | 'transplanted';
-  location: string;
-  bloodType: string;
-  age: number;
-  size: string;
-  urgency: 'critical' | 'high' | 'medium' | 'low';
-  timeRemaining: string;
-  recipient?: {
-    name: string;
-    location: string;
-    urgency: string;
-  };
-  lastUpdated: string;
-  icon: React.ComponentType<any>;
-  color: string;
-}
+import { LiveOrganTrackingService, LiveOrgan, OrganTransplantLog } from "@/services/LiveOrganTrackingService";
 
 interface LiveUpdate {
   id: string;
@@ -55,149 +35,97 @@ const LiveOrgansDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  // Mock data - in real app, this would come from your blockchain/backend
   useEffect(() => {
-    const mockLiveOrgans: LiveOrgan[] = [
-      {
-        id: '1',
-        organType: 'heart',
-        organLabel: 'Heart',
-        status: 'available',
-        location: 'New York Medical Center',
-        bloodType: 'O+',
-        age: 25,
-        size: 'Medium',
-        urgency: 'critical',
-        timeRemaining: '4 hours',
-        lastUpdated: '2 minutes ago',
-        icon: Heart,
-        color: 'text-red-500'
-      },
-      {
-        id: '2',
-        organType: 'liver',
-        organLabel: 'Liver',
-        status: 'in_transit',
-        location: 'En route to California',
-        bloodType: 'A+',
-        age: 32,
-        size: 'Large',
-        urgency: 'critical',
-        timeRemaining: '6 hours',
-        recipient: {
-          name: 'John Smith',
-          location: 'California Transplant Institute',
-          urgency: 'Critical'
-        },
-        lastUpdated: '1 minute ago',
-        icon: Activity,
-        color: 'text-orange-500'
-      },
-      {
-        id: '3',
-        organType: 'kidney',
-        organLabel: 'Kidney',
-        status: 'matched',
-        location: 'Ohio Kidney Institute',
-        bloodType: 'B+',
-        age: 28,
-        size: 'Medium',
-        urgency: 'high',
-        timeRemaining: '12 hours',
-        recipient: {
-          name: 'Sarah Johnson',
-          location: 'Pennsylvania Transplant Center',
-          urgency: 'High'
-        },
-        lastUpdated: '3 minutes ago',
-        icon: Users,
-        color: 'text-blue-500'
-      },
-      {
-        id: '4',
-        organType: 'lung',
-        organLabel: 'Lung',
-        status: 'transplanted',
-        location: 'Colorado Lung Center',
-        bloodType: 'AB+',
-        age: 35,
-        size: 'Large',
-        urgency: 'critical',
-        timeRemaining: 'Completed',
-        recipient: {
-          name: 'Michael Chen',
-          location: 'Colorado Lung Center',
-          urgency: 'Critical'
-        },
-        lastUpdated: '30 minutes ago',
-        icon: TrendingUp,
-        color: 'text-purple-500'
-      },
-      {
-        id: '5',
-        organType: 'pancreas',
-        organLabel: 'Pancreas',
-        status: 'available',
-        location: 'Massachusetts Pancreas Center',
-        bloodType: 'O-',
-        age: 29,
-        size: 'Medium',
-        urgency: 'high',
-        timeRemaining: '8 hours',
-        lastUpdated: '5 minutes ago',
-        icon: Zap,
-        color: 'text-green-500'
+    loadLiveData();
+    
+    // Subscribe to real-time updates
+    const unsubscribe = LiveOrganTrackingService.subscribeToLiveUpdates(
+      'dashboard',
+      (organs) => {
+        setLiveOrgans(organs);
+        generateLiveUpdates(organs);
       }
-    ];
+    );
 
-    const mockLiveUpdates: LiveUpdate[] = [
-      {
-        id: '1',
-        type: 'transplant',
-        message: 'Heart transplant completed successfully at New York Medical Center',
-        timestamp: '2 minutes ago',
-        priority: 'high'
-      },
-      {
-        id: '2',
-        type: 'match',
-        message: 'New kidney match found for patient in Pennsylvania',
-        timestamp: '5 minutes ago',
-        priority: 'high'
-      },
-      {
-        id: '3',
-        type: 'donation',
-        message: 'Liver donation registered from California donor',
-        timestamp: '8 minutes ago',
-        priority: 'medium'
-      },
-      {
-        id: '4',
-        type: 'request',
-        message: 'Critical heart request submitted from Texas',
-        timestamp: '12 minutes ago',
-        priority: 'high'
-      },
-      {
-        id: '5',
-        type: 'transplant',
-        message: 'Lung transplant procedure started in Colorado',
-        timestamp: '15 minutes ago',
-        priority: 'medium'
-      }
-    ];
-
-    setLiveOrgans(mockLiveOrgans);
-    setLiveUpdates(mockLiveUpdates);
-    setLoading(false);
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  const handleRefresh = () => {
+  const loadLiveData = async () => {
     setLoading(true);
+    try {
+      const organs = await LiveOrganTrackingService.getLiveOrgans();
+      setLiveOrgans(organs);
+      generateLiveUpdates(organs);
+    } catch (error) {
+      console.error('Error loading live data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateLiveUpdates = (organs: LiveOrgan[]) => {
+    const updates: LiveUpdate[] = [];
+    
+    // Generate updates based on recent organ activities
+    organs.slice(0, 10).forEach(organ => {
+      const timeAgo = getTimeAgo(organ.updated_at);
+      let message = '';
+      let type: LiveUpdate['type'] = 'donation';
+      let priority: LiveUpdate['priority'] = 'medium';
+
+      switch (organ.status) {
+        case 'available':
+          message = `${organ.organ_label} donation available at ${organ.location_name}`;
+          type = 'donation';
+          priority = organ.urgency === 'critical' ? 'high' : 'medium';
+          break;
+        case 'matched':
+          message = `${organ.organ_label} matched with recipient at ${organ.location_name}`;
+          type = 'match';
+          priority = 'high';
+          break;
+        case 'in_transit':
+          message = `${organ.organ_label} in transit to ${organ.recipient_location}`;
+          type = 'transplant';
+          priority = 'high';
+          break;
+        case 'transplanted':
+          message = `${organ.organ_label} transplant completed successfully`;
+          type = 'transplant';
+          priority = 'high';
+          break;
+      }
+
+      if (message) {
+        updates.push({
+          id: organ.id,
+          type,
+          message,
+          timestamp: timeAgo,
+          priority
+        });
+      }
+    });
+
+    setLiveUpdates(updates.slice(0, 5)); // Show only 5 most recent
+  };
+
+  const getTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hour${Math.floor(diffInMinutes / 60) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffInMinutes / 1440)} day${Math.floor(diffInMinutes / 1440) > 1 ? 's' : ''} ago`;
+  };
+
+  const handleRefresh = () => {
     setLastRefresh(new Date());
-    // Simulate API call
-    setTimeout(() => setLoading(false), 1000);
+    loadLiveData();
   };
 
   const getStatusBadge = (status: string) => {
@@ -363,67 +291,94 @@ const LiveOrgansDashboard = () => {
 
         <TabsContent value="organs" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {liveOrgans.map((organ) => (
-              <Card key={organ.id} className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <organ.icon className={`w-5 h-5 ${organ.color}`} />
-                      <CardTitle className="text-lg">{organ.organLabel}</CardTitle>
-                    </div>
-                    {getStatusBadge(organ.status)}
-                  </div>
-                  <CardDescription className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{organ.location}</span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">Blood Type:</span>
-                      <div className="font-medium">{organ.bloodType}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Age:</span>
-                      <div className="font-medium">{organ.age} years</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Size:</span>
-                      <div className="font-medium">{organ.size}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Urgency:</span>
-                      <div>{getUrgencyBadge(organ.urgency)}</div>
-                    </div>
-                  </div>
+            {liveOrgans.map((organ) => {
+              const getOrganIcon = (organType: string) => {
+                switch (organType) {
+                  case 'heart': return Heart;
+                  case 'liver': return Activity;
+                  case 'kidney': return Users;
+                  case 'lung': return TrendingUp;
+                  case 'pancreas': return Zap;
+                  default: return Activity;
+                }
+              };
 
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-500">Time Remaining:</span>
-                    </div>
-                    <Badge variant="outline" className={organ.status === 'transplanted' ? 'text-green-600' : ''}>
-                      {organ.timeRemaining}
-                    </Badge>
-                  </div>
+              const getOrganColor = (organType: string) => {
+                switch (organType) {
+                  case 'heart': return 'text-red-500';
+                  case 'liver': return 'text-orange-500';
+                  case 'kidney': return 'text-blue-500';
+                  case 'lung': return 'text-purple-500';
+                  case 'pancreas': return 'text-green-500';
+                  default: return 'text-gray-500';
+                }
+              };
 
-                  {organ.recipient && (
-                    <div className="pt-2 border-t">
-                      <div className="text-sm">
-                        <span className="text-gray-500">Recipient:</span>
-                        <div className="font-medium">{organ.recipient.name}</div>
-                        <div className="text-xs text-gray-500">{organ.recipient.location}</div>
+              const OrganIcon = getOrganIcon(organ.organ_type);
+              const organColor = getOrganColor(organ.organ_type);
+
+              return (
+                <Card key={organ.id} className="hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <OrganIcon className={`w-5 h-5 ${organColor}`} />
+                        <CardTitle className="text-lg">{organ.organ_label}</CardTitle>
+                      </div>
+                      {getStatusBadge(organ.status)}
+                    </div>
+                    <CardDescription className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{organ.location_name}</span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Blood Type:</span>
+                        <div className="font-medium">{organ.blood_type || 'Not specified'}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Age:</span>
+                        <div className="font-medium">{organ.organ_age ? `${organ.organ_age} years` : 'Not specified'}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Size:</span>
+                        <div className="font-medium">{organ.organ_size || 'Not specified'}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Urgency:</span>
+                        <div>{getUrgencyBadge(organ.urgency)}</div>
                       </div>
                     </div>
-                  )}
 
-                  <div className="text-xs text-gray-500 pt-2 border-t">
-                    Updated: {organ.lastUpdated}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-500">Time Remaining:</span>
+                      </div>
+                      <Badge variant="outline" className={organ.status === 'transplanted' ? 'text-green-600' : ''}>
+                        {organ.time_remaining ? `${organ.time_remaining}h` : 'N/A'}
+                      </Badge>
+                    </div>
+
+                    {organ.recipient_name && (
+                      <div className="pt-2 border-t">
+                        <div className="text-sm">
+                          <span className="text-gray-500">Recipient:</span>
+                          <div className="font-medium">{organ.recipient_name}</div>
+                          <div className="text-xs text-gray-500">{organ.recipient_location}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-gray-500 pt-2 border-t">
+                      Updated: {getTimeAgo(organ.updated_at)}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 
