@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { BlockchainProvider } from "@/contexts/BlockchainContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Awareness from "./pages/Awareness";
+import LiveOrgans from "./pages/LiveOrgans";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
@@ -27,6 +29,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/awareness" element={<Awareness />} />
+              <Route path="/live-organs" element={<LiveOrgans />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/dashboard" element={<Dashboard />} />

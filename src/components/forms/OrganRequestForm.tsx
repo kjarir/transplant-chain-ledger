@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import OrganAvailabilityDropdown from "@/components/OrganAvailabilityDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -78,18 +79,14 @@ const OrganRequestForm = ({ patientId, onSuccess }: OrganRequestFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="organ-type">Organ Type</Label>
-        <Select value={formData.organType} onValueChange={(value) => setFormData({ ...formData, organType: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select organ type" />
-          </SelectTrigger>
-          <SelectContent>
-            {organTypes.map((organ) => (
-              <SelectItem key={organ.value} value={organ.value}>
-                {organ.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <OrganAvailabilityDropdown
+          onOrganSelect={(organType) => setFormData({ ...formData, organType })}
+          showDetails={true}
+          className="w-full"
+        />
+        <p className="text-xs text-muted-foreground">
+          View real-time availability and priority levels for each organ type
+        </p>
       </div>
 
       <div className="space-y-2">

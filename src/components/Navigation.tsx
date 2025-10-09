@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X, Heart, Shield, Users, Activity } from "lucide-react";
+import { Menu, X, Heart, Shield, Users, Activity, BookOpen, Zap } from "lucide-react";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,8 +11,10 @@ const Navigation = () => {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Heart },
+    { href: "/awareness", label: "Awareness", icon: BookOpen },
+    { href: "/live-organs", label: "Live Organs", icon: Zap },
     { href: "/about", label: "About", icon: Shield },
-    { href: "/contact", label: "Contact", icon: Heart },
+    { href: "/contact", label: "Contact", icon: Users },
     ...(user ? [{ href: "/dashboard", label: "Dashboard", icon: Activity }] : [])
   ];
 

@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, Heart, Activity, TrendingUp, AlertTriangle, CheckCircle, Eye } from "lucide-react";
+import { Shield, Users, Heart, Activity, TrendingUp, AlertTriangle, CheckCircle, Eye, BookOpen } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import BlogManagement from "@/components/BlogManagement";
 
 interface Profile {
   id: string;
@@ -246,10 +247,14 @@ const AdminDashboard = ({ profile }: { profile: Profile }) => {
 
       {/* Detailed Management */}
       <Tabs defaultValue="transactions" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="transactions">Blockchain</TabsTrigger>
           <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           <TabsTrigger value="certificates">Certificates</TabsTrigger>
+          <TabsTrigger value="content" className="flex items-center space-x-1">
+            <BookOpen className="w-4 h-4" />
+            <span>Content</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="transactions" className="space-y-6">
@@ -365,6 +370,10 @@ const AdminDashboard = ({ profile }: { profile: Profile }) => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6">
+          <BlogManagement />
         </TabsContent>
       </Tabs>
     </div>
